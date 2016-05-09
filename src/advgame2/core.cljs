@@ -9,13 +9,33 @@
 
 (def monet-canvas (canvas/init canvas-dom "2d"))
 
-(canvas/add-entity monet-canvas :background
-                   (canvas/entity {:x 0 :y 0 :w 600 :h 600} ; val
-                                  nil                       ; update function
-                                  (fn [ctx val]             ; draw function
-                                    (-> ctx
-                                        (canvas/fill-style "#191d21")
-                                        (canvas/fill-rect val)))))
+(defn load-image [src]
+  (let [img (new js/Image)]
+    (set! (.-src img) src)
+    img))
+
+(def tile-img (load-image "asset/img/Water.png"))
+
+(defn start []
+  (do
+    (canvas/add-entity monet-canvas :background
+                       (canvas/entity {:x 0 :y 0 :w 600 :h 600} ; val
+                                      nil                       ; update function
+                                      (fn [ctx val]             ; draw function
+                                        (-> ctx
+                                            (canvas/fill-style "#00ff00")
+                                            (canvas/fill-rect val)))))
+
+    (canvas/add-entity monet-canvas :water
+                       (canvas/entity {:x 0 :y 0 :w 32 :h 32}
+                                      nil
+                                      (fn [ctx val]
+                                        (-> ctx
+                                            (canvas/draw-image tile-img val)))))
+    
+    ))
+
+(set! (.-onload js/window) (fn [] (start)))
 
 (enable-console-print!)
 
