@@ -2,8 +2,8 @@
   (:require [clojure.browser.repl :as repl]
             [monet.canvas :as canvas]))
 
-(defonce conn
-  (repl/connect "http://localhost:9000/repl"))
+;;(defonce conn
+;;  (repl/connect "http://localhost:9000/repl"))
 
 (def canvas-dom (.getElementById js/document "canvas"))
 
@@ -19,7 +19,7 @@
 (defn start []
   (do
     (canvas/add-entity monet-canvas :background
-                       (canvas/entity {:x 0 :y 0 :w 600 :h 600} ; val
+                       (canvas/entity {:x 0 :y 0 :w 640 :h 480} ; val
                                       nil                       ; update function
                                       (fn [ctx val]             ; draw function
                                         (-> ctx
@@ -27,7 +27,7 @@
                                             (canvas/fill-rect val)))))
 
     (canvas/add-entity monet-canvas :water
-                       (canvas/entity {:x 0 :y 0 :w 32 :h 32}
+                       (canvas/entity {:x 0 :y 0}
                                       nil
                                       (fn [ctx val]
                                         (-> ctx
