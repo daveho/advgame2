@@ -10,3 +10,4 @@ pom.xml
 .lein-plugins/
 .repl*
 *.swp
+/.cljs_node_repl
