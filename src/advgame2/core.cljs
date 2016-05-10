@@ -1,9 +1,10 @@
 (ns advgame2.core
   (:require [clojure.browser.repl :as repl]
-            [tincan.core :as tin]))
+            [tincan.core :as tin]
+            [perlin.core :as perlin]))
 
-;;(defonce conn
-;;  (repl/connect "http://localhost:9000/repl"))
+(defonce conn
+  (repl/connect "http://localhost:9000/repl"))
 
 (def c (js/document.getElementById "canvas"))
 
@@ -45,6 +46,21 @@
        "wwwwwgFgwwwWWWW"
        )
   )
+
+(defn noise-at [x y]
+  (+ (* .066666 (perlin/noise x y 0.0))              ; 1/15
+     (* .133333 (perlin/noise (* 2 x) (* 2 y) 0.0))  ; 2/15
+     (* .266666 (perlin/noise (* 4 x) (* 4 y) 0.0))  ; 4/15
+     (* .533333 (perlin/noise (* 8 x) (* 8 y) 0.0))  ; 8/15
+     )
+  )
+
+(defn gen-terrain []
+  (for [i (range 0 256)
+        j (range 0 256)]
+    (let [y (/ j 256.0)
+          x (/ i 256.0)]
+      (noise-at x y))))
 
 (defn char-at [s idx]
   (subs s idx (+ idx 1)))
