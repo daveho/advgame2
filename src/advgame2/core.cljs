@@ -1,13 +1,13 @@
 (ns advgame2.core
   (:require [clojure.browser.repl :as repl]
-            [monet.canvas :as canvas]))
+            [tincan.core :as tin]))
 
 ;;(defonce conn
 ;;  (repl/connect "http://localhost:9000/repl"))
 
-(def canvas-dom (.getElementById js/document "canvas"))
+(def c (js/document.getElementById "canvas"))
 
-(def monet-canvas (canvas/init canvas-dom "2d"))
+(def ctx (tin/get-context c))
 
 (defn load-image [src]
   (let [img (new js/Image)]
@@ -53,25 +53,12 @@
 
 (defn start []
   (do
-    (canvas/add-entity monet-canvas :background
-                       (canvas/entity {:x 0 :y 0 :w 640 :h 480} ; val
-                                      nil                       ; update function
-                                      (fn [ctx val]             ; draw function
-                                        (-> ctx
-                                            (canvas/fill-style "#00ff00")
-                                            (canvas/fill-rect val)))))
-
-    (canvas/add-entity monet-canvas :water
-                       (canvas/entity {:x 0 :y 0}
-                                      nil
-                                      (fn [ctx val]
-                                        (doall
-                                          (for [x (range 15)
-                                                y (range 15)]
-                                            (let [c (char-at overworld-spec (+ (* y 15) x))
-                                                  img (get tile-images c)]
-                                              ;(println (str "c=" c))
-                                              (canvas/draw-image ctx img {:x (* x 32) :y (* y 32)})))) )))
+      (doall
+        (for [x (range 15)
+              y (range 15)]
+          (let [c (char-at overworld-spec (+ (* y 15) x))
+                img (get tile-images c)]
+            (tin/draw-image ctx img (* x 32) (* y 32)))))
     
     ))
 
