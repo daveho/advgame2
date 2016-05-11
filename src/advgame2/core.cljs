@@ -28,24 +28,24 @@
    }
   )
 
-(def overworld-spec
-  (str "WWWWWWwwWWWWWWW"
-       "WWwwwwwwwwwwWWW"
-       "WWWwgggggggwwWW"
-       "WWwggppgggwwwWW"
-       "WWggpffpggggwww"
-       "Wwwgpfmfpggwwww"
-       "wggpfmmffpggwww"
-       "wwggpfmfpgggwww"
-       "Wwwwgfppgggggww"
-       "WWWwwgpggggwwww"
-       "WWWWwwgggwwwwww"
-       "WWWwwggwwwwwwwW"
-       "WwwggFFgggwwwwW"
-       "wwwwFFFFgwwwWWW"
-       "wwwwwgFgwwwWWWW"
-       )
-  )
+;; (def overworld-spec
+;;   (str "WWWWWWwwWWWWWWW"
+;;        "WWwwwwwwwwwwWWW"
+;;        "WWWwgggggggwwWW"
+;;        "WWwggppgggwwwWW"
+;;        "WWggpffpggggwww"
+;;        "Wwwgpfmfpggwwww"
+;;        "wggpfmmffpggwww"
+;;        "wwggpfmfpgggwww"
+;;        "Wwwwgfppgggggww"
+;;        "WWWwwgpggggwwww"
+;;        "WWWWwwgggwwwwww"
+;;        "WWWwwggwwwwwwwW"
+;;        "WwwggFFgggwwwwW"
+;;        "wwwwFFFFgwwwWWW"
+;;        "wwwwwgFgwwwWWWW"
+;;        )
+;;   )
 
 (defn noise-at [x y]
   (+ (* .066666 (perlin/noise x y 0.0))              ; 1/15
@@ -55,12 +55,36 @@
      )
   )
 
+(def MAP_SIZE 64)
+
+(defn noise-values-for-terrain-map []
+  (for [i (range MAP_SIZE)]
+    (let [y (/ i (double MAP_SIZE))]
+      (for [j (range MAP_SIZE)]
+        (let [x (/ j (double MAP_SIZE))]
+          (noise-at x y)))))) 
+
+(defn height-to-terrain [h]
+  (cond
+    (<= h -0.5) "W"
+    (<= h 0.0) "w"
+    (<= h 0.4) "g"
+    (<= h 0.5) "F"
+    (<= h 0.6) "p"
+    (<= h 0.7) "f"
+    (<= h 1.0) "m")
+  )
+
+;; Convert a sequence of noise values into terrain characters
+(defn gen-terrain-row [vals]
+  (apply str (map height-to-terrain vals))
+  )
+
 (defn gen-terrain []
-  (for [i (range 0 256)
-        j (range 0 256)]
-    (let [y (/ j 256.0)
-          x (/ i 256.0)]
-      (noise-at x y))))
+  (mapv gen-terrain-row (noise-values-for-terrain-map))
+  )
+
+(def overworld-spec (gen-terrain))
 
 (defn char-at [s idx]
   (subs s idx (+ idx 1)))
@@ -72,7 +96,8 @@
       (doall
         (for [x (range 15)
               y (range 15)]
-          (let [c (char-at overworld-spec (+ (* y 15) x))
+          (let [row (get overworld-spec y)
+                c (char-at row x)
                 img (get tile-images c)]
             (tin/draw-image ctx img (* x 32) (* y 32)))))
     
