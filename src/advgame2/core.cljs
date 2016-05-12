@@ -99,18 +99,22 @@
   []
   (events/listen (KeyHandler. js/document) EventType.KEY log-event))
 
+(defn draw-map []
+  (doall
+   (for [x (range 15)
+         y (range 15)]
+     (let [row (get overworld-spec y)
+           c (char-at row x)
+           img (get tile-images c)]
+       (tin/draw-image ctx img (* x 32) (* y 32)))))
+  )
+
 (enable-console-print!)
 
 (defn start []
   (do
     (keyboard-events)
-    (doall
-     (for [x (range 15)
-           y (range 15)]
-       (let [row (get overworld-spec y)
-             c (char-at row x)
-             img (get tile-images c)]
-         (tin/draw-image ctx img (* x 32) (* y 32)))))
+    (draw-map)
     ))
 
 (set! (.-onload js/window) (fn [] (start)))
