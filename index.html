@@ -1,11 +1,37 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>advgame2</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    </head>
+  <head>
+    <title>Adventure game?</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style type="text/css">
+     #canvas-holder { width: 512px; height: 512px; margin: 0 auto; }
+     #instructions {
+       position: absolute;
+       left: 10px;
+       top: 10px;
+       display: none;
+     }
+     #loading {
+       position: absolute;
+       right: 10px;
+       top: 10px;
+       width: 90px;
+       text-align: center;
+     }
+     #loading img { width: 45px; }
+    </style>
     <body>
-	<canvas id="canvas" width="640" height="480"></canvas>
-        <script src="out/advgame2.js" type="text/javascript"></script>
+      <div id="instructions">
+        Use arrow keys to scroll.
+      </div>
+      <div id="loading">
+        <img alt="loading animation" src="asset/img/spinner.gif">
+        Loading...
+      </div>
+      <div id="canvas-holder">
+        <canvas id="canvas" width="512" height="512"></canvas>
+      </div>
+      <script src="out/advgame2.js" type="text/javascript"></script>
     </body>
+  </head>
 </html>

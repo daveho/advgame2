@@ -33,15 +33,18 @@
    }
   )
 
-(defn noise-at [x y]
-  (+ (* .066666 (perlin/noise x y 0.0))              ; 1/15
-     (* .133333 (perlin/noise (* 2 x) (* 2 y) 0.0))  ; 2/15
-     (* .266666 (perlin/noise (* 4 x) (* 4 y) 0.0))  ; 4/15
-     (* .533333 (perlin/noise (* 8 x) (* 8 y) 0.0))  ; 8/15
-     )
-  )
+(def z (js/Math.random))
 
-(def MAP_SIZE 64)
+(defn octave [x y n denom]
+  (* (/ n denom) (perlin/noise (* n x) (* n y) z)))
+
+(def octave-vals [1 2 4 8 16])
+
+(defn noise-at [x y]
+  (apply + (map (fn [n] (octave x y n 32)) octave-vals)))
+
+(def MAP_SIZE 300)
+(def VIEWPORT_SIZE 32)
 
 (defn noise-values-for-terrain-map []
   (for [i (range MAP_SIZE)]
@@ -52,12 +55,12 @@
 
 (defn height-to-terrain [h]
   (cond
-    (<= h -0.5) "W"
-    (<= h 0.0) "w"
-    (<= h 0.4) "g"
-    (<= h 0.5) "F"
-    (<= h 0.6) "p"
-    (<= h 0.7) "f"
+    (<= h -0.1) "W"
+    (<= h 0.08) "w"
+    (<= h 0.2) "g"
+;    (<= h 0.5) "F"
+    (<= h 0.28) "p"
+    (<= h 0.32) "f"
     (<= h 1.0) "m")
   )
 
@@ -80,8 +83,8 @@
   (let [map-spec (:map @state)
         pos (:pos @state)]
     (doall
-     (for [x (range (:x pos) (+ (:x pos) 32))
-           y (range (:y pos) (+ (:y pos) 32))]
+     (for [x (range (:x pos) (+ (:x pos) VIEWPORT_SIZE))
+           y (range (:y pos) (+ (:y pos) VIEWPORT_SIZE))]
        (let [row (get map-spec y)
              c (get row x)
              img (get tile-images c)]
@@ -104,14 +107,14 @@
 (defn pos-in-bounds? [pos]
   (and (not (neg? (:x pos)))
        (not (neg? (:y pos)))
-       (<= (+ (:x pos) 32) MAP_SIZE)
-       (<= (+ (:y pos) 32) MAP_SIZE)))
+       (<= (+ (:x pos) VIEWPORT_SIZE) MAP_SIZE)
+       (<= (+ (:y pos) VIEWPORT_SIZE) MAP_SIZE)))
 
 (defn handle-key-event [event]
   (let [key-code (.-keyCode event)]
     (if (is-arrow-key event)
       (let [next (next-pos (:pos @state) event)]
-        (println "next.x=" (:x next) ", next.y=" (:y next))
+        ;(println "next.x=" (:x next) ", next.y=" (:y next))
         (if (pos-in-bounds? next)
           (do
             (swap! state assoc :pos next)
@@ -123,10 +126,19 @@
   []
   (events/listen (KeyHandler. js/document) EventType.KEY handle-key-event))
 
+(defn set-display! [id dispval]
+  (let [elt (js/document.getElementById id)
+        style (.-style elt)
+        ]
+    ;(println "style=" style)
+    (aset style "display" dispval)))
+
 (defn start []
   (do
     (keyboard-events)
     (draw-map)
+    (set-display! "loading" "none")
+    (set-display! "instructions" "block")
     ))
 
 (set! (.-onload js/window) (fn [] (start)))
