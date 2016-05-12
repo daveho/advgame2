@@ -1,0 +1,11 @@
+Art credits:
+
+asset/img/boat-{left,right,up,down}.png
+  http://opengameart.org/content/16x16-fantasy-pixel-art-vehicles
+  Art by DualR. Commissioned by OpenGameArt.org (http://opengameart.org
+  CC-BY-SA 3.0
+
+asset/img/knight.png
+  http://opengameart.org/content/animated-knights
+  Art by Sogomn
+  CC0 (public domain)

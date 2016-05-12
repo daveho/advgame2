@@ -11,6 +11,10 @@
 
 (enable-console-print!)
 
+(def MAP_SIZE 300)
+(def VIEWPORT_SIZE 15)
+(def VIEWPORT_SIZE_HALF (int (/ VIEWPORT_SIZE 2)))
+
 (def c (js/document.getElementById "canvas"))
 
 (def ctx (tin/get-context c))
@@ -19,8 +23,6 @@
   (let [img (new js/Image)]
     (set! (.-src img) src)
     img))
-
-(def tile-img (load-image "asset/img/Water.png"))
 
 (def tile-images
   {"w" (load-image "asset/img/Water.png"),
@@ -33,25 +35,31 @@
    }
   )
 
-(def z (js/Math.random))
+(def knight-image (load-image "asset/img/knight.png"))
 
-(defn octave [x y n denom]
+(def boat-image (load-image "asset/img/boat-right.png"))
+
+(defn octave [x y z n denom]
   (* (/ n denom) (perlin/noise (* n x) (* n y) z)))
 
 (def octave-vals [1 2 4 8 16])
 
-(defn noise-at [x y]
-  (apply + (map (fn [n] (octave x y n 32)) octave-vals)))
+(defn noise-at [x y z]
+  (apply + (map (fn [n] (octave x y z n (* (last octave-vals) 2))) octave-vals)))
 
-(def MAP_SIZE 300)
-(def VIEWPORT_SIZE 32)
+(defn pos-in-bounds? [pos]
+  (and (>= (:x pos) 0)
+       (>= (:y pos) 0)
+       (< (:x pos) MAP_SIZE)
+       (< (:y pos) MAP_SIZE)))
 
 (defn noise-values-for-terrain-map []
-  (for [i (range MAP_SIZE)]
-    (let [y (/ i (double MAP_SIZE))]
-      (for [j (range MAP_SIZE)]
-        (let [x (/ j (double MAP_SIZE))]
-          (noise-at x y)))))) 
+  (let [z (js/Math.random)]
+    (for [i (range MAP_SIZE)]
+      (let [y (/ i (double MAP_SIZE))]
+        (for [j (range MAP_SIZE)]
+          (let [x (/ j (double MAP_SIZE))]
+            (noise-at x y z)))))))
 
 (defn height-to-terrain [h]
   (cond
@@ -69,29 +77,41 @@
   (vec (map height-to-terrain vals)))
 
 (defn gen-terrain []
-  (mapv gen-terrain-row (noise-values-for-terrain-map))
-  )
+  (mapv gen-terrain-row (noise-values-for-terrain-map)))
 
-(def overworld-spec (gen-terrain))
+(defn terrain-at [map-spec x y]
+  (get (get map-spec y) x))
 
-(def state (atom
- {:map overworld-spec
-  :pos {:x 0 :y 0}
-  }))
+;; Initial dummy state
+(def state (atom {:map nil :pos {:x 0 :y 0}}))
 
-(defn draw-map []
-  (let [map-spec (:map @state)
-        pos (:pos @state)]
+(defn draw-map [map-spec pos]
+  (let [xmin (- (:x pos) VIEWPORT_SIZE_HALF)
+        ymin (- (:y pos) VIEWPORT_SIZE_HALF)]
+    ;(println "xmin=" xmin ", ymin=" ymin)
     (doall
-     (for [x (range (:x pos) (+ (:x pos) VIEWPORT_SIZE))
-           y (range (:y pos) (+ (:y pos) VIEWPORT_SIZE))]
-       (let [row (get map-spec y)
-             c (get row x)
-             img (get tile-images c)]
-         (tin/draw-image ctx img (* (- x (:x pos)) 16) (* (- y (:y pos)) 16) 16 16))))
-    )
-  )
+     (for [x (range xmin (+ xmin VIEWPORT_SIZE))
+           y (range ymin (+ ymin VIEWPORT_SIZE))]
+       (if (pos-in-bounds? {:x x :y y})
+         (let [c (terrain-at map-spec x y)
+               img (get tile-images c)]
+           (tin/draw-image ctx img (* (- x xmin) 32) (* (- y ymin) 32)))
+         (do
+           (tin/set-fill-style! ctx "#000")
+           (tin/fill-rect ctx (* (- x xmin) 32) (* (- y ymin) 32) 32 32))))
 
+     ))
+  (let [c (terrain-at map-spec (:x pos) (:y pos))
+        img (if (or (= c "w") (= c "W")) boat-image knight-image)]
+    (tin/draw-image ctx img (* VIEWPORT_SIZE_HALF 32) (* VIEWPORT_SIZE_HALF 32))))
+
+(defn choose-initial-pos [map-spec]
+  (let [x (int (* (js/Math.random) MAP_SIZE))
+        y (int (* (js/Math.random) MAP_SIZE))
+        tval (terrain-at map-spec x y)]
+    (if (= tval "g")
+      {:x x :y y}
+      (recur map-spec))))
 
 (defn is-arrow-key [event]
   (contains? #{37 38 39 40} (.-keyCode event)))
@@ -104,12 +124,6 @@
     40 (assoc cur-pos :y (inc (:y cur-pos))) ; down
     (throw (js/Error. "Not an arrow key"))))
 
-(defn pos-in-bounds? [pos]
-  (and (not (neg? (:x pos)))
-       (not (neg? (:y pos)))
-       (<= (+ (:x pos) VIEWPORT_SIZE) MAP_SIZE)
-       (<= (+ (:y pos) VIEWPORT_SIZE) MAP_SIZE)))
-
 (defn handle-key-event [event]
   (let [key-code (.-keyCode event)]
     (if (is-arrow-key event)
@@ -118,7 +132,7 @@
         (if (pos-in-bounds? next)
           (do
             (swap! state assoc :pos next)
-            (draw-map))
+            (draw-map (:map @state) (:pos @state)))
           )
         ))))
 
@@ -135,8 +149,10 @@
 
 (defn start []
   (do
+    (swap! state assoc :map (gen-terrain))
+    (swap! state assoc :pos (choose-initial-pos (:map @state)))
     (keyboard-events)
-    (draw-map)
+    (draw-map (:map @state) (:pos @state))
     (set-display! "loading" "none")
     (set-display! "instructions" "block")
     ))
