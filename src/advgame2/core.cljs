@@ -9,6 +9,8 @@
 (defonce conn
   (repl/connect "http://localhost:9000/repl"))
 
+(enable-console-print!)
+
 (def c (js/document.getElementById "canvas"))
 
 (def ctx (tin/get-context c))
@@ -30,25 +32,6 @@
    "F" (load-image "asset/img/Forest.png")
    }
   )
-
-;; (def overworld-spec
-;;   (str "WWWWWWwwWWWWWWW"
-;;        "WWwwwwwwwwwwWWW"
-;;        "WWWwgggggggwwWW"
-;;        "WWwggppgggwwwWW"
-;;        "WWggpffpggggwww"
-;;        "Wwwgpfmfpggwwww"
-;;        "wggpfmmffpggwww"
-;;        "wwggpfmfpgggwww"
-;;        "Wwwwgfppgggggww"
-;;        "WWWwwgpggggwwww"
-;;        "WWWWwwgggwwwwww"
-;;        "WWWwwggwwwwwwwW"
-;;        "WwwggFFgggwwwwW"
-;;        "wwwwFFFFgwwwWWW"
-;;        "wwwwwgFgwwwWWWW"
-;;        )
-;;   )
 
 (defn noise-at [x y]
   (+ (* .066666 (perlin/noise x y 0.0))              ; 1/15
@@ -78,10 +61,9 @@
     (<= h 1.0) "m")
   )
 
-;; Convert a sequence of noise values into terrain characters
+;; Convert a sequence of noise values into vector of terrain characters
 (defn gen-terrain-row [vals]
-  (apply str (map height-to-terrain vals))
-  )
+  (vec (map height-to-terrain vals)))
 
 (defn gen-terrain []
   (mapv gen-terrain-row (noise-values-for-terrain-map))
@@ -89,27 +71,57 @@
 
 (def overworld-spec (gen-terrain))
 
-(defn char-at [s idx]
-  (subs s idx (+ idx 1)))
+(def state (atom
+ {:map overworld-spec
+  :pos {:x 0 :y 0}
+  }))
 
-(defn log-event [event]
-  (.log js/console event))
+(defn draw-map []
+  (let [map-spec (:map @state)
+        pos (:pos @state)]
+    (doall
+     (for [x (range (:x pos) (+ (:x pos) 32))
+           y (range (:y pos) (+ (:y pos) 32))]
+       (let [row (get map-spec y)
+             c (get row x)
+             img (get tile-images c)]
+         (tin/draw-image ctx img (* (- x (:x pos)) 16) (* (- y (:y pos)) 16) 16 16))))
+    )
+  )
+
+
+(defn is-arrow-key [event]
+  (contains? #{37 38 39 40} (.-keyCode event)))
+
+(defn next-pos [cur-pos event]
+  (condp = (.-keyCode event)
+    37 (assoc cur-pos :x (dec (:x cur-pos))) ; left
+    38 (assoc cur-pos :y (dec (:y cur-pos))) ; up
+    39 (assoc cur-pos :x (inc (:x cur-pos))) ; right
+    40 (assoc cur-pos :y (inc (:y cur-pos))) ; down
+    (throw (js/Error. "Not an arrow key"))))
+
+(defn pos-in-bounds? [pos]
+  (and (not (neg? (:x pos)))
+       (not (neg? (:y pos)))
+       (<= (+ (:x pos) 32) MAP_SIZE)
+       (<= (+ (:y pos) 32) MAP_SIZE)))
+
+(defn handle-key-event [event]
+  (let [key-code (.-keyCode event)]
+    (if (is-arrow-key event)
+      (let [next (next-pos (:pos @state) event)]
+        (println "next.x=" (:x next) ", next.y=" (:y next))
+        (if (pos-in-bounds? next)
+          (do
+            (swap! state assoc :pos next)
+            (draw-map))
+          )
+        ))))
 
 (defn keyboard-events
   []
-  (events/listen (KeyHandler. js/document) EventType.KEY log-event))
-
-(defn draw-map []
-  (doall
-   (for [x (range 15)
-         y (range 15)]
-     (let [row (get overworld-spec y)
-           c (char-at row x)
-           img (get tile-images c)]
-       (tin/draw-image ctx img (* x 32) (* y 32)))))
-  )
-
-(enable-console-print!)
+  (events/listen (KeyHandler. js/document) EventType.KEY handle-key-event))
 
 (defn start []
   (do
