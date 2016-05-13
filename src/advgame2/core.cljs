@@ -2,7 +2,9 @@
   (:require [clojure.browser.repl :as repl]
             [tincan.core :as tin]
             [perlin.core :as perlin]
-            [goog.events :as events])
+            [goog.events :as events]
+            [advgame2.grid :as grid]
+            )
   (:import [goog.events KeyHandler]
            [goog.events.KeyHandler EventType]))
 
@@ -79,11 +81,19 @@
 (defn gen-terrain []
   (mapv gen-terrain-row (noise-values-for-terrain-map)))
 
+
+(defn create-overworld []
+  (let [z (js/Math.random)
+        genfn (fn [x y]
+                (height-to-terrain (noise-at x y z)))]
+    (grid/create MAP_SIZE MAP_SIZE genfn)))
+
+
 (defn terrain-at [map-spec x y]
   (get (get map-spec y) x))
 
 ;; Initial dummy state
-(def state (atom {:map nil :pos {:x 0 :y 0}}))
+(def state (atom {:map nil :pos {:x 0 :y 0} :grid nil}))
 
 (defn draw-map [map-spec pos]
   (let [xmin (- (:x pos) VIEWPORT_SIZE_HALF)
@@ -150,6 +160,7 @@
 (defn start []
   (do
     (swap! state assoc :map (gen-terrain))
+    (swap! state assoc :grid (create-overworld))
     (swap! state assoc :pos (choose-initial-pos (:map @state)))
     (keyboard-events)
     (draw-map (:map @state) (:pos @state))
