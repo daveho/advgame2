@@ -3,6 +3,7 @@
             [tincan.core :as tin]
             [perlin.core :as perlin]
             [goog.events :as events]
+            [advgame2.pos :as pos]
             [advgame2.grid :as grid]
             )
   (:import [goog.events KeyHandler]
@@ -49,20 +50,6 @@
 (defn noise-at [x y z]
   (apply + (map (fn [n] (octave x y z n (* (last octave-vals) 2))) octave-vals)))
 
-(defn pos-in-bounds? [pos]
-  (and (>= (:x pos) 0)
-       (>= (:y pos) 0)
-       (< (:x pos) MAP_SIZE)
-       (< (:y pos) MAP_SIZE)))
-
-(defn noise-values-for-terrain-map []
-  (let [z (js/Math.random)]
-    (for [i (range MAP_SIZE)]
-      (let [y (/ i (double MAP_SIZE))]
-        (for [j (range MAP_SIZE)]
-          (let [x (/ j (double MAP_SIZE))]
-            (noise-at x y z)))))))
-
 (defn height-to-terrain [h]
   (cond
     (<= h -0.1) "W"
@@ -74,54 +61,44 @@
     (<= h 1.0) "m")
   )
 
-;; Convert a sequence of noise values into vector of terrain characters
-(defn gen-terrain-row [vals]
-  (vec (map height-to-terrain vals)))
-
-(defn gen-terrain []
-  (mapv gen-terrain-row (noise-values-for-terrain-map)))
-
-
 (defn create-overworld []
   (let [z (js/Math.random)
-        genfn (fn [x y]
-                (height-to-terrain (noise-at x y z)))]
+        genfn (fn [pos]
+                (let [x (/ (pos/get-x pos) MAP_SIZE)
+                      y (/ (pos/get-y pos) MAP_SIZE)]
+                  (height-to-terrain (noise-at x y z))))]
     (grid/create MAP_SIZE MAP_SIZE genfn)))
 
-
-(defn terrain-at [map-spec x y]
-  (get (get map-spec y) x))
-
 ;; Initial dummy state
-(def state (atom {:map nil :pos {:x 0 :y 0} :grid nil}))
+(def state (atom {:grid nil :pos (pos/create 0 0)}))
 
-(defn draw-map [map-spec pos]
+(defn draw-map [map-grid pos]
   (let [xmin (- (:x pos) VIEWPORT_SIZE_HALF)
         ymin (- (:y pos) VIEWPORT_SIZE_HALF)]
-    ;(println "xmin=" xmin ", ymin=" ymin)
     (doall
-     (for [x (range xmin (+ xmin VIEWPORT_SIZE))
-           y (range ymin (+ ymin VIEWPORT_SIZE))]
-       (if (pos-in-bounds? {:x x :y y})
-         (let [c (terrain-at map-spec x y)
-               img (get tile-images c)]
-           (tin/draw-image ctx img (* (- x xmin) 32) (* (- y ymin) 32)))
-         (do
-           (tin/set-fill-style! ctx "#000")
-           (tin/fill-rect ctx (* (- x xmin) 32) (* (- y ymin) 32) 32 32))))
-
-     ))
-  (let [c (terrain-at map-spec (:x pos) (:y pos))
+     (for [y (range ymin (+ ymin VIEWPORT_SIZE))
+           x (range xmin (+ xmin VIEWPORT_SIZE))]
+       (let [tpos (pos/create x y)]
+         (if (grid/in-bounds? map-grid tpos)
+           ; draw terrain icon
+           (let [c (grid/get-val map-grid tpos)
+                 img (get tile-images c)]
+             (tin/draw-image ctx img (* (- x xmin) 32) (* (- y ymin) 32)))
+           ; out of bounds, fill with black
+           (do
+             (tin/set-fill-style! ctx "#000")
+             (tin/fill-rect ctx (* (- x xmin) 32) (* (- y ymin) 32) 32 32)))))))
+  (let [c (grid/get-val map-grid pos)
         img (if (or (= c "w") (= c "W")) boat-image knight-image)]
     (tin/draw-image ctx img (* VIEWPORT_SIZE_HALF 32) (* VIEWPORT_SIZE_HALF 32))))
 
-(defn choose-initial-pos [map-spec]
+(defn choose-initial-pos [map-grid]
   (let [x (int (* (js/Math.random) MAP_SIZE))
         y (int (* (js/Math.random) MAP_SIZE))
-        tval (terrain-at map-spec x y)]
+        tval (grid/get-val map-grid (pos/create x y))]
     (if (= tval "g")
-      {:x x :y y}
-      (recur map-spec))))
+      (pos/create x y)
+      (recur map-grid))))
 
 (defn is-arrow-key [event]
   (contains? #{37 38 39 40} (.-keyCode event)))
@@ -135,16 +112,16 @@
     (throw (js/Error. "Not an arrow key"))))
 
 (defn handle-key-event [event]
-  (let [key-code (.-keyCode event)]
+  (let [key-code (.-keyCode event)
+        map-grid (:grid @state)
+        ]
     (if (is-arrow-key event)
       (let [next (next-pos (:pos @state) event)]
         ;(println "next.x=" (:x next) ", next.y=" (:y next))
-        (if (pos-in-bounds? next)
+        (if (grid/in-bounds? map-grid next)
           (do
             (swap! state assoc :pos next)
-            (draw-map (:map @state) (:pos @state)))
-          )
-        ))))
+            (draw-map (:grid @state) (:pos @state))))))))
 
 (defn keyboard-events
   []
@@ -152,18 +129,20 @@
 
 (defn set-display! [id dispval]
   (let [elt (js/document.getElementById id)
-        style (.-style elt)
-        ]
-    ;(println "style=" style)
+        style (.-style elt)]
     (aset style "display" dispval)))
 
 (defn start []
   (do
-    (swap! state assoc :map (gen-terrain))
+    ;(swap! state assoc :map (gen-terrain))
+    (println "Creating overworld...")
     (swap! state assoc :grid (create-overworld))
-    (swap! state assoc :pos (choose-initial-pos (:map @state)))
+    (println "done")
+    (println "Choosing initial pos...")
+    (swap! state assoc :pos (choose-initial-pos (:grid @state)))
+    (println "done, initial pos=" (:pos @state))
     (keyboard-events)
-    (draw-map (:map @state) (:pos @state))
+    (draw-map (:grid @state) (:pos @state))
     (set-display! "loading" "none")
     (set-display! "instructions" "block")
     ))
