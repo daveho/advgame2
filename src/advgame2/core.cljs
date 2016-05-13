@@ -79,7 +79,7 @@
       (pos/create x y)
       (recur map-grid))))
 
-(defn is-arrow-key [event]
+(defn is-arrow-key? [event]
   (contains? #{37 38 39 40} (.-keyCode event)))
 
 (defn next-pos [cur-pos event]
@@ -94,7 +94,7 @@
   (let [key-code (.-keyCode event)
         map-grid (:grid @state)
         ]
-    (if (is-arrow-key event)
+    (if (is-arrow-key? event)
       (let [next (next-pos (:pos @state) event)]
         ;(println "next.x=" (:x next) ", next.y=" (:y next))
         (if (grid/in-bounds? map-grid next)
