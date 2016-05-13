@@ -126,6 +126,6 @@
     (set-display! "instructions" "block")
     ))
 
-(set! (.-onload js/window) (fn [] (start)))
+(set! (.-onload js/window) start)
 
 (println "Hello world!")
