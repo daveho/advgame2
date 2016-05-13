@@ -1,10 +1,10 @@
 (ns advgame2.core
   (:require [clojure.browser.repl :as repl]
             [tincan.core :as tin]
-            [perlin.core :as perlin]
             [goog.events :as events]
             [advgame2.pos :as pos]
             [advgame2.grid :as grid]
+            [advgame2.overworld :as overworld]
             )
   (:import [goog.events KeyHandler]
            [goog.events.KeyHandler EventType]))
@@ -41,33 +41,6 @@
 (def knight-image (load-image "asset/img/knight.png"))
 
 (def boat-image (load-image "asset/img/boat-right.png"))
-
-(defn octave [x y z n denom]
-  (* (/ n denom) (perlin/noise (* n x) (* n y) z)))
-
-(def octave-vals [1 2 4 8 16])
-
-(defn noise-at [x y z]
-  (apply + (map (fn [n] (octave x y z n (* (last octave-vals) 2))) octave-vals)))
-
-(defn height-to-terrain [h]
-  (cond
-    (<= h -0.1) "W"
-    (<= h 0.08) "w"
-    (<= h 0.2) "g"
-;    (<= h 0.5) "F"
-    (<= h 0.28) "p"
-    (<= h 0.32) "f"
-    (<= h 1.0) "m")
-  )
-
-(defn create-overworld []
-  (let [z (js/Math.random)
-        genfn (fn [pos]
-                (let [x (/ (pos/get-x pos) MAP_SIZE)
-                      y (/ (pos/get-y pos) MAP_SIZE)]
-                  (height-to-terrain (noise-at x y z))))]
-    (grid/create MAP_SIZE MAP_SIZE genfn)))
 
 ;; Initial dummy state
 (def state (atom {:grid nil :pos (pos/create 0 0)}))
@@ -142,7 +115,7 @@
   (do
     ;(swap! state assoc :map (gen-terrain))
     (println "Creating overworld...")
-    (swap! state assoc :grid (create-overworld))
+    (swap! state assoc :grid (overworld/create MAP_SIZE MAP_SIZE))
     (println "done")
     (println "Choosing initial pos...")
     (swap! state assoc :pos (choose-initial-pos (:grid @state)))
