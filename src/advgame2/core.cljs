@@ -87,10 +87,16 @@
            ; out of bounds, fill with black
            (do
              (tin/set-fill-style! ctx "#000")
-             (tin/fill-rect ctx (* (- x xmin) 32) (* (- y ymin) 32) 32 32)))))))
+             (tin/fill-rect ctx (* (- x xmin) 32) (* (- y ymin) 32) 32 32))))))))
+
+(defn draw-player-sprite [map-grid pos]
   (let [c (grid/get-val map-grid pos)
         img (if (or (= c "w") (= c "W")) boat-image knight-image)]
     (tin/draw-image ctx img (* VIEWPORT_SIZE_HALF 32) (* VIEWPORT_SIZE_HALF 32))))
+
+(defn redraw [map-grid pos]
+  (draw-map map-grid pos)
+  (draw-player-sprite map-grid pos))
 
 (defn choose-initial-pos [map-grid]
   (let [x (int (* (js/Math.random) MAP_SIZE))
@@ -121,7 +127,7 @@
         (if (grid/in-bounds? map-grid next)
           (do
             (swap! state assoc :pos next)
-            (draw-map (:grid @state) (:pos @state))))))))
+            (redraw (:grid @state) (:pos @state))))))))
 
 (defn keyboard-events
   []
@@ -142,7 +148,7 @@
     (swap! state assoc :pos (choose-initial-pos (:grid @state)))
     (println "done, initial pos=" (:pos @state))
     (keyboard-events)
-    (draw-map (:grid @state) (:pos @state))
+    (redraw (:grid @state) (:pos @state))
     (set-display! "loading" "none")
     (set-display! "instructions" "block")
     ))
