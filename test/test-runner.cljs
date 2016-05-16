@@ -1,7 +1,7 @@
 (ns test-runner
   (:require
    [cljs.test :as test :refer-macros [run-tests] :refer [report]]
-   [advgame2.test]))
+   [advgame2.core-test]))
 
 
 (enable-console-print!)
@@ -15,4 +15,4 @@
 (defn runner []
   (test/run-tests
    (test/empty-env ::test/default)
-   'advgame2.test))
+   'advgame2.core-test))
