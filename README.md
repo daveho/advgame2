@@ -2,6 +2,18 @@
 
 This is an attempt to write an adventure game in ClojureScript.
 
+## Project structure
+
+The `src-model` directory contains all of the UI-independent code.  This code can be tested.
+
+The `src` directory contains all of the UI (browser-based) code.
+
+## Testing
+
+Make sure that `phantomjs` is installed.
+
+Run `./runtests.sh` to run the tests.
+
 ## Code used
 
 [Tincan](https://github.com/nhusher/tincan), license is in [LICENSE-tincan.txt](LICENSE-tincan.txt).
