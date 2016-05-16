@@ -1,5 +1,5 @@
 (ns advgame2.core
-  (:require [clojure.browser.repl :as repl]
+  (:require ;[clojure.browser.repl :as repl]
             [tincan.core :as tin]
             [goog.events :as events]
             [advgame2.pos :as pos]
@@ -9,8 +9,8 @@
   (:import [goog.events KeyHandler]
            [goog.events.KeyHandler EventType]))
 
-(defonce conn
-  (repl/connect "http://localhost:9000/repl"))
+;(defonce conn
+;  (repl/connect "http://localhost:9000/repl"))
 
 (enable-console-print!)
 
