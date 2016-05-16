@@ -2,7 +2,7 @@
   (:require
    [cljs.test :refer-macros [deftest testing is]]
    ; Add imports for our namespaces here...
-   [advgame2.core :as c]
+   ;[advgame2.core :as c]
    ))
 
 (deftest test-numbers
