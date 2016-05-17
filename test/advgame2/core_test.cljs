@@ -1,4 +1,3 @@
-
 (ns advgame2.core-test
   (:require
    [cljs.test :refer-macros [deftest testing is]]
@@ -6,6 +5,7 @@
    [advgame2.pos :as pos]
    [advgame2.rect :as rect]
    [advgame2.grid :as grid]
+   [advgame2.spcoll :as spcoll]
    ))
 
 ;; (deftest test-numbers
@@ -52,4 +52,21 @@
     (is (grid/in-bounds? grid1 (pos/create 0 1)))
     (is (grid/in-bounds? grid1 (pos/create 1 0)))
     (is (grid/in-bounds? grid1 (pos/create 1 1)))
+    ))
+
+; Some spatial objects
+(def obj1 {:id 'a :pos (pos/create 2 3) :val 42})
+(def obj2 {:id 'b :pos (pos/create 11 27) :val 101})
+(def obj3 {:id 'c :pos (pos/create -4 -10) :val 33})
+
+; empty spcoll
+(def spcoll-empty (spcoll/create))
+
+; spcoll with just obj1 and obj2
+(def spcoll12 (spcoll/create obj1 obj2))
+
+(deftest spcoll-test
+  (testing "spcoll data type"
+    (is (= obj1 (spcoll/find-by-id spcoll12 'a)))
+    (is (= obj2 (spcoll/find-by-id spcoll12 'b)))
     ))
