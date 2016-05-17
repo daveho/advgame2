@@ -24,6 +24,14 @@
   (testing "rect data type"
     (is (= 2 (pos/get-x (rect/get-upleft rect1))))
     (is (= 3 (pos/get-y (rect/get-upleft rect1))))
+    (is (= 5 (rect/get-w rect1)))
+    (is (= 6 (rect/get-h rect1)))
+    (is (not (rect/contains-pos? rect1 (pos/create 1 3))))
+    (is (not (rect/contains-pos? rect1 (pos/create 2 2))))
+    (is (not (rect/contains-pos? rect1 (pos/create 7 8))))
+    (is (not (rect/contains-pos? rect1 (pos/create 2 9))))
+    (is (rect/contains-pos? rect1 (pos/create 6 3)))
+    (is (rect/contains-pos? rect1 (pos/create 4 8)))
     ))
 
 ;; This grid is  [["A" "B"]
