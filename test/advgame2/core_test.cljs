@@ -65,8 +65,28 @@
 ; spcoll with just obj1 and obj2
 (def spcoll12 (spcoll/create obj1 obj2))
 
+; add obj3 to spcoll12
+(def spcoll123 (spcoll/add spcoll12 obj3))
+
+; contains? isn't defined for sequences
+(defn seq-contains? [seq val]
+  (not (empty? (filter #(= % val) seq))))
+
 (deftest spcoll-test
   (testing "spcoll data type"
     (is (= obj1 (spcoll/find-by-id spcoll12 'a)))
     (is (= obj2 (spcoll/find-by-id spcoll12 'b)))
+
+    (is (seq-contains? (spcoll/find-by-pos spcoll12 (pos/create 2 3)) obj1))
+    (is (seq-contains? (spcoll/find-by-pos spcoll12 (pos/create 11 27)) obj2))
+
+    (is (not (spcoll/find-by-pos spcoll12 (pos/create 2 4))))
+
+    (is (= obj1 (spcoll/find-by-id spcoll123 'a)))
+    (is (= obj2 (spcoll/find-by-id spcoll123 'b)))
+    (is (= obj3 (spcoll/find-by-id spcoll123 'c)))
+
+    (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create 2 3)) obj1))
+    (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create 11 27)) obj2))
+    (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create -4 -10)) obj3))
     ))
