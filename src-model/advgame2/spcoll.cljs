@@ -45,7 +45,7 @@
 
 (defn find-by-pos [spcoll pos]
   "Find collection of objects with given pos, empty collection if no objects at specified pos"
-  (get (:posmap spcoll) pos #{}))
+  (vals (get (:posmap spcoll) pos {})))
 
 (defn find-all-in-rect [spcoll rect]
   "Return sequence of all objects within given rect"
