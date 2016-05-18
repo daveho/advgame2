@@ -75,6 +75,17 @@
 (def boundrect1 (rect/create (pos/create 0 0) 12 28))
 (def boundrect2 (rect/create (pos/create 5 26) 9 4))
 
+;; Example of an object update function
+(defn move-right [obj]
+  (let [cur-pos (:pos obj)
+        cur-x (pos/get-x cur-pos)
+        cur-y (pos/get-y cur-pos)
+        next-pos (pos/create (+ cur-x 1) cur-y)]
+    (assoc obj :pos next-pos)))
+
+(def spcoll123-updated
+  (spcoll/update-obj spcoll123 obj3 move-right))
+
 (deftest spcoll-test
   (testing "spcoll data type"
     (is (= obj1 (spcoll/find-by-id spcoll12 'a)))
@@ -100,5 +111,7 @@
     (is (not (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj1)))
     (is (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj2))
     (is (not (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj3)))
+
+    (is (= (pos/create -3 -10) (:pos (spcoll/find-by-id spcoll123-updated 'c))))
 
     ))
