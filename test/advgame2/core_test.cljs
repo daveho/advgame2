@@ -72,6 +72,9 @@
 (defn seq-contains? [seq val]
   (not (empty? (filter #(= % val) seq))))
 
+(def boundrect1 (rect/create (pos/create 0 0) 12 28))
+(def boundrect2 (rect/create (pos/create 5 26) 9 4))
+
 (deftest spcoll-test
   (testing "spcoll data type"
     (is (= obj1 (spcoll/find-by-id spcoll12 'a)))
@@ -89,4 +92,13 @@
     (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create 2 3)) obj1))
     (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create 11 27)) obj2))
     (is (seq-contains? (spcoll/find-by-pos spcoll123 (pos/create -4 -10)) obj3))
+
+    (is (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect1) obj1))
+    (is (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect1) obj2))
+    (is (not (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect1) obj3)))
+
+    (is (not (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj1)))
+    (is (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj2))
+    (is (not (seq-contains? (spcoll/find-all-in-rect spcoll123 boundrect2) obj3)))
+
     ))
