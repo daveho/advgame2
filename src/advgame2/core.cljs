@@ -71,13 +71,13 @@
   (draw-map map-grid pos)
   (draw-player-sprite map-grid pos))
 
-(defn choose-initial-pos [map-grid]
-  (let [x (int (* (js/Math.random) MAP_SIZE))
-        y (int (* (js/Math.random) MAP_SIZE))
-        tval (grid/get-val map-grid (pos/create x y))]
-    (if (= tval "g")
-      (pos/create x y)
-      (recur map-grid))))
+;; (defn choose-initial-pos [map-grid]
+;;   (let [x (int (* (js/Math.random) MAP_SIZE))
+;;         y (int (* (js/Math.random) MAP_SIZE))
+;;         tval (grid/get-val map-grid (pos/create x y))]
+;;     (if (= tval "g")
+;;       (pos/create x y)
+;;       (recur map-grid))))
 
 (defn is-arrow-key? [event]
   (contains? #{37 38 39 40} (.-keyCode event)))
@@ -118,7 +118,9 @@
     (swap! state assoc :grid (overworld/create MAP_SIZE MAP_SIZE))
     (println "done")
     (println "Choosing initial pos...")
-    (swap! state assoc :pos (choose-initial-pos (:grid @state)))
+    (swap! state assoc :pos (grid/choose-random-pos (:grid @state) (fn [g pos]
+                                                                     (let [t (grid/get-val g pos)]
+                                                                       (= t "g")))))
     (println "done, initial pos=" (:pos @state))
     (keyboard-events)
     (redraw (:grid @state) (:pos @state))
