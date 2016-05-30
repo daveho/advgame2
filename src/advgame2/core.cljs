@@ -33,7 +33,7 @@
    "g" (load-image "asset/img/Grass.png"),
    "p" (load-image "asset/img/Plateau.png"),
    "f" (load-image "asset/img/Foothills.png"),
-   "m" (load-image "asset/img/Mountains.png"),
+   "m" (load-image "asset/img/Mountains2.png"),
    "F" (load-image "asset/img/Forest.png")
    }
   )
