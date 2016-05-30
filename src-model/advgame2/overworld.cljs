@@ -22,6 +22,7 @@
     (<= h 1.0) "m"))
 
 (defn create [ncol nrow]
+  "Create a random overworld grid"
   (let [z (js/Math.random)
         genfn (fn [pos]
                 (let [x (/ (pos/get-x pos) ncol)
